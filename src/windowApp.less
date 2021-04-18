@@ -1,0 +1,46 @@
+.window{
+    border-radius: 4px;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.5);
+
+    .window-header{
+        width: 100%;
+        height: 40px;
+        line-height: 40px;
+        user-select: none;
+
+        .window-icon{
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .window-title{
+            width: 200px;
+            height: 20px;
+            display: inline-block;
+        }
+        .window-action{
+            float: right;
+
+            .window-action-button{
+                display: inline-block;
+                width: 40px;
+                height: 40px;
+                text-align: center;
+            }
+            .window-action-button:hover{
+                background-color: rgba(0,0,0, 0.1);
+            }
+        }
+    }
+
+    .window-content{
+        position: absolute;
+        top: 40px;
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        background-color: white;
+    }
+}

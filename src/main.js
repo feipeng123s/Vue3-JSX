@@ -1,9 +1,8 @@
 import {createApp} from 'vue';
 import App from './app.jsx';
+import ElementPlus from 'element-plus';
+import 'element-plus/lib/theme-chalk/index.css';
 
-// createApp({
-//     render() {
-//         return <div>Vue 3.0</div>;
-//     }
-// }).mount('#app');
-createApp(App).mount('#app');
+const app = createApp(App);
+app.use(ElementPlus);
+app.mount('#app');

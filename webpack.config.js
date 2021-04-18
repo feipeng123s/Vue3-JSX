@@ -45,6 +45,43 @@ module.exports = {
                 presets: ["@vue/babel-preset-jsx"]
               }
             }
+          },
+          {
+            test: /\.css$/i,
+            use: ["style-loader", "css-loader", "postcss-loader"]
+          },
+          {
+            test: /\.less$/i,
+            use: [
+              {
+                loader: "style-loader",
+              },
+              {
+                loader: "css-loader",
+              },
+              {
+                loader: "less-loader",
+                options: {
+                  lessOptions: {
+                    strictMath: true,
+                  },
+                },
+              },
+            ]
+          },
+          {
+            test: /\.(eot|woff2?|ttf|svg)$/,
+            use: [
+              {
+                loader: "url-loader",
+                options: {
+                  name: "[name]-[hash:5].min.[ext]",
+                  limit: 5000, // fonts file size <= 5KB, use 'base64'; else, output svg file
+                  publicPath: "fonts/",
+                  outputPath: "fonts/"
+                }
+              }
+            ]
           }
         ]
     }
