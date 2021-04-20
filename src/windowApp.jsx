@@ -5,13 +5,18 @@ const App = {
         return {
             startX: 0,
             startY: 0,
+            startWidth: 0,
+            startHeight: 0,
             startOffsetX: 0,
             startOffsetY: 0,
             enableDrag: false,
             windowIcon: '',
             windowTitle: 'Title',
             maximum: false,
-            originSize: {}
+            originSize: {},
+            isResize: false,
+            cursor: 'default',
+            startCursor: 'default'
         }
     },
     mounted() {
@@ -23,11 +28,10 @@ const App = {
     },
     methods: {
         startDrag(event) {
-            this.startX = event.clientX;
-            this.startY = event.clientY;
-            this.startOffsetX = this.$refs.windowapp.offsetLeft;
-            this.startOffsetY = this.$refs.windowapp.offsetTop;
             this.enableDrag = true;
+
+            document.onmousemove = this.drag;
+            document.onmouseup = this.stopDrag;
         }, 
         drag(event) {
             if(!this.enableDrag) return;
@@ -41,9 +45,10 @@ const App = {
         stopDrag(event) {
             this.drag(event);
             this.enableDrag = false;
+            document.onmousemove = null;
+            document.onmouseup = null;
         },
         maximize() {
-            console.log('maximize');
             let windowapp = this.$refs.windowapp;
 
             if(this.maximum) {
@@ -70,12 +75,130 @@ const App = {
             }
 
             this.maximum = !this.maximum;
+        },
+        hover(event) {
+            let windowapp = this.$refs.windowapp;
+            let cursor = 'default';
+            let leftMargin = event.clientX - windowapp.offsetLeft;
+            let rightMargin = windowapp.offsetLeft + windowapp.offsetWidth - event.clientX;
+            let topMargin = event.clientY - windowapp.offsetTop;
+            let bottomMargin = windowapp.offsetTop + windowapp.offsetHeight - event.clientY;
+
+            if(leftMargin < 5) {
+                if(topMargin < 5) {
+                    cursor = 'nw-resize';
+                } else if(bottomMargin < 5) {
+                    cursor = 'sw-resize';
+                } else {
+                    cursor = 'w-resize';
+                }
+            } else if(rightMargin < 5) {
+                if(topMargin < 5) {
+                    cursor = 'ne-resize';
+                } else if(bottomMargin < 5) {
+                    cursor = 'se-resize';
+                } else {
+                    cursor = 'e-resize';
+                }
+            } else if(topMargin < 5) {
+                cursor = 'n-resize';
+            } else if(bottomMargin < 5) {
+                cursor = 's-resize';
+            }
+
+            this.isResize = cursor !== 'default';
+            this.cursor = cursor;
+
+            windowapp.style.cursor = cursor;
+        },
+        resize(event) {
+            this.startCursor = this.cursor;
+            document.onmousemove = this.resizemove;
+            document.onmouseup = this.resizeend;
+        },
+        resizemove(event) {
+            let windowapp = this.$refs.windowapp;
+            let x = event.clientX - this.startX;
+            let y = event.clientY - this.startY;
+            let width = this.startWidth;
+            let height = this.startHeight;
+
+            switch(this.startCursor){
+                case 'nw-resize':
+                    windowapp.style.left = (this.startOffsetX + x) + 'px';
+                    windowapp.style.width = (width - x) + 'px';
+                    windowapp.style.top = (this.startOffsetY + y) + 'px';
+                    windowapp.style.height = (height - y) + 'px';
+                    break;
+                case 'n-resize':
+                    windowapp.style.top = (this.startOffsetY + y) + 'px';
+                    windowapp.style.height = (height - y) + 'px';
+                    break;
+                case 'w-resize':
+                    windowapp.style.left = (this.startOffsetX + x) + 'px';
+                    windowapp.style.width = (width - x) + 'px';
+                    break;
+                case 'sw-resize':
+                    windowapp.style.left = (this.startOffsetX + x) + 'px';
+                    windowapp.style.width = (width - x) + 'px';
+                    // windowapp.style.top = (this.startOffsetY + y) + 'px';
+                    windowapp.style.height = (height + y) + 'px';
+                    break;
+                case 's-resize':
+                    windowapp.style.height = (height + y) + 'px';
+                    break;
+                case 'se-resize':
+                    windowapp.style.width = (width + x) + 'px';
+                    windowapp.style.height = (height + y) + 'px';
+                    break;
+                case 'e-resize':
+                    windowapp.style.width = (width + x) + 'px';
+                    break;
+                case 'ne-resize':
+                    windowapp.style.width = (width + x) + 'px';
+                    windowapp.style.top = (this.startOffsetY + y) + 'px';
+                    windowapp.style.height = (height - y) + 'px';
+                    break;
+            }
+        },
+        resizeend(event) {
+            this.resizemove(event);
+            document.onmousemove = null;
+            document.onmouseup = null;
+        },
+        mousedown(event) {
+            this.startX = event.clientX;
+            this.startY = event.clientY;
+            this.startOffsetX = this.$refs.windowapp.offsetLeft;
+            this.startOffsetY = this.$refs.windowapp.offsetTop;
+
+            let windowapp = this.$refs.windowapp;
+            let width = windowapp.style.width;
+            if(width.includes('px')) {
+                width = parseInt(width.slice(0, width.length - 2));
+            } else {
+                width = parseInt(width);
+            }
+            let height = windowapp.style.height;
+            if(height.includes('px')) {
+                height = parseInt(height.slice(0, height.length - 2));
+            } else {
+                height = parseInt(height);
+            }
+            this.startWidth = width;
+            this.startHeight = height;
+
+            if(this.isResize) {
+                this.resize(event);
+            } else {
+                this.startDrag(event);
+            }
         }
     },
     render() {
         return (
-        <div className="window" ref="windowapp">
-            <div className="window-header" onmousedown={this.startDrag} onmousemove={this.drag} onmouseup={this.stopDrag}>
+        <div className="window" ref="windowapp" onmousedown={this.mousedown} onmousemove={this.hover}>
+            <div className="window-header" onmousedown={this.mousedown} ondblclick={this.maximize}>
                 <div className="window-icon">
                     <i class="el-icon-picture"></i>
                 </div>
