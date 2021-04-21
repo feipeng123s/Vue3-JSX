@@ -28,8 +28,9 @@ const App = {
     },
     methods: {
         startDrag(event) {
+            if(this.isResize) return;
             this.enableDrag = true;
-
+            this.getPosition(event);
             document.onmousemove = this.drag;
             document.onmouseup = this.stopDrag;
         }, 
@@ -38,8 +39,21 @@ const App = {
             let x = event.clientX - this.startX;
             let y = event.clientY - this.startY;
             if(Math.abs(x) > 10 || Math.abs(y) > 10) {
-                this.$refs.windowapp.style.left = (this.startOffsetX + x) + 'px';
-                this.$refs.windowapp.style.top = (this.startOffsetY + y) + 'px';
+                let moveX = this.startOffsetX + x;
+                if(moveX < 0) {
+                    moveX = 0;
+                } else if(moveX > window.innerWidth - this.startWidth){
+                    moveX = window.innerWidth - this.startWidth;
+                }
+                this.$refs.windowapp.style.left = moveX + 'px';
+
+                let moveY = this.startOffsetY + y;
+                if(moveY < 0) {
+                    moveY = 0;
+                } else if(moveY > window.innerHeight - this.startHeight) {
+                    moveY = window.innerHeight - this.startHeight;
+                }
+                this.$refs.windowapp.style.top = moveY + 'px';
             }
         },
         stopDrag(event) {
@@ -112,14 +126,31 @@ const App = {
             windowapp.style.cursor = cursor;
         },
         resize(event) {
+            if(!this.isResize) return;
+            this.getPosition(event);
             this.startCursor = this.cursor;
             document.onmousemove = this.resizemove;
             document.onmouseup = this.resizeend;
         },
         resizemove(event) {
             let windowapp = this.$refs.windowapp;
-            let x = event.clientX - this.startX;
-            let y = event.clientY - this.startY;
+
+            let clientX = event.clientX;
+            if(clientX < 0) {
+                clientX = 0;
+            } else if(clientX > window.innerWidth) {
+                clientX = window.innerWidth;
+            }
+
+            let clientY = event.clientY;
+            if(clientY < 0) {
+                clientY = 0;
+            } else if(clientY > window.innerHeight) {
+                clientY = window.innerHeight - 3;
+            }
+
+            let x = clientX - this.startX;
+            let y = clientY - this.startY;
             let width = this.startWidth;
             let height = this.startHeight;
 
@@ -141,7 +172,6 @@ const App = {
                 case 'sw-resize':
                     windowapp.style.left = (this.startOffsetX + x) + 'px';
                     windowapp.style.width = (width - x) + 'px';
-                    // windowapp.style.top = (this.startOffsetY + y) + 'px';
                     windowapp.style.height = (height + y) + 'px';
                     break;
                 case 's-resize':
@@ -166,7 +196,7 @@ const App = {
             document.onmousemove = null;
             document.onmouseup = null;
         },
-        mousedown(event) {
+        getPosition(event) {
             this.startX = event.clientX;
             this.startY = event.clientY;
             this.startOffsetX = this.$refs.windowapp.offsetLeft;
@@ -187,18 +217,12 @@ const App = {
             }
             this.startWidth = width;
             this.startHeight = height;
-
-            if(this.isResize) {
-                this.resize(event);
-            } else {
-                this.startDrag(event);
-            }
         }
     },
     render() {
         return (
-        <div className="window" ref="windowapp" onmousedown={this.mousedown} onmousemove={this.hover}>
-            <div className="window-header" onmousedown={this.mousedown} ondblclick={this.maximize}>
+        <div className="window" ref="windowapp" onmousedown={this.resize} onmousemove={this.hover}>
+            <div className="window-header" onmousedown={this.startDrag} ondblclick={this.maximize}>
                 <div className="window-icon">
                     <i class="el-icon-picture"></i>
                 </div>
